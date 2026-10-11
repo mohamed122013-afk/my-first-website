@@ -1,0 +1,968 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وطني - منصة الخدمات والمرافق العامة والخاصة</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Arabic Fonts (Tajawal & Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        national: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                        emeraldDeep: '#06381e',
+                        goldAccent: '#fbbf24',
+                    },
+                    fontFamily: {
+                        tajawal: ['Tajawal', 'sans-serif'],
+                        cairo: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #052e16 0%, #0d4722 50%, #063019 100%);
+            background-attachment: fixed;
+            color: #f8fafc;
+        }
+
+        /* Glassmorphism utility */
+        .glass-card {
+            background: rgba(20, 83, 45, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-nav {
+            background: rgba(5, 46, 22, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-modal {
+            background: rgba(10, 40, 22, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #052e16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #16a34a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+
+        /* Pulsing Dot for Live Status */
+        .pulse-dot {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* Map Pin Animation */
+        .map-pin {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .map-pin:hover {
+            transform: translateY(-8px) scale(1.15);
+            z-index: 30;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-national-500 selection:text-white">
+
+    <!-- Navbar / Header -->
+    <header class="glass-nav sticky top-0 z-40 w-full transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo & Brand Name -->
+                <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="resetFilters()">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-national-600 to-national-400 flex items-center justify-center shadow-lg shadow-national-900/50 border border-national-300/30">
+                        <i class="fa-solid fa-flag text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-black font-cairo tracking-wide text-white block">وَطَنِي</span>
+                        <span class="text-xs text-national-300 font-medium tracking-normal block -mt-1">منصة المرافق والخدمات</span>
+                    </div>
+                </div>
+
+                <!-- Live Search Bar (Desktop) -->
+                <div class="hidden md:flex flex-1 max-w-lg mx-8 relative">
+                    <div class="relative w-full">
+                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="ابحث عن مستشفى، صيدلية، مركز شرطة، خدمة صيانة..." 
+                               class="w-full bg-national-950/60 text-white placeholder-emerald-200/60 text-sm rounded-xl pl-10 pr-12 py-3 border border-national-700/50 focus:outline-none focus:border-national-400 focus:ring-2 focus:ring-national-400/30 transition-all">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-national-400">
+                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                        </div>
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-white">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMapListView()" class="hidden sm:flex items-center gap-2 bg-national-800/80 hover:bg-national-700 text-national-100 px-4 py-2.5 rounded-xl border border-national-600/40 transition-all duration-200 text-sm font-medium">
+                        <i id="viewToggleIcon" class="fa-solid fa-map"></i>
+                        <span id="viewToggleText">عرض الخريطة</span>
+                    </button>
+
+                    <button onclick="openAddFacilityModal()" class="flex items-center gap-2 bg-gradient-to-r from-national-500 to-national-600 hover:from-national-400 hover:to-national-500 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-national-950/40 border border-national-300/30 transition-all duration-200 text-sm font-bold active:scale-95">
+                        <i class="fa-solid fa-plus-circle text-base"></i>
+                        <span class="hidden xs:inline">إضافة مرفق</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <div class="pb-4 pt-1 md:hidden">
+                <div class="relative w-full">
+                    <input type="text" id="mobileSearchInput" oninput="handleMobileSearch()" placeholder="ابحث عن مرفق أو خدمة..." 
+                           class="w-full bg-national-950/60 text-white placeholder-emerald-200/60 text-sm rounded-xl pl-10 pr-11 py-2.5 border border-national-700/50 focus:outline-none focus:border-national-400">
+                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-national-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        
+        <!-- Welcome Hero Banner -->
+        <section class="relative rounded-3xl overflow-hidden glass-card p-6 sm:p-10 border border-national-500/20 shadow-2xl">
+            <!-- Background Decorative Elements -->
+            <div class="absolute -top-24 -left-24 w-72 h-72 bg-national-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-goldAccent/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-8 space-y-4 text-right">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-national-500/20 text-national-300 text-xs font-semibold border border-national-400/30">
+                        <span class="w-2 h-2 rounded-full bg-national-400 pulse-dot"></span>
+                        دليلك الشامل لجميع المرافق في المملكة
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-cairo text-white leading-tight">
+                        جميع الخدمات والـمَـرَافِـق <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-l from-national-300 via-national-200 to-goldAccent">بين يديك وفي مكان واحد</span>
+                    </h1>
+                    <p class="text-emerald-100/80 text-sm sm:text-base leading-relaxed max-w-2xl">
+                        منصة "وطني" تتيح لك الوصول السريع والدقيق للمرافق العامة مثل المستشفيات والبلديات ومراكز الشرطة، والمرافق الخاصة مثل الصيدليات والورش الفنية ومراكز الخدمة بكل يسر وسهولة.
+                    </p>
+                    
+                    <!-- Quick Filter Badges -->
+                    <div class="pt-2 flex flex-wrap gap-2 text-xs">
+                        <span class="text-emerald-300 font-medium">الأكثر بحثاً:</span>
+                        <button onclick="quickFilter('مستشفى')" class="bg-national-900/60 hover:bg-national-800 text-emerald-200 px-3 py-1 rounded-lg border border-national-700/50 transition">مستشفيات وطوارئ</button>
+                        <button onclick="quickFilter('صيدلية')" class="bg-national-900/60 hover:bg-national-800 text-emerald-200 px-3 py-1 rounded-lg border border-national-700/50 transition">صيدليات 24 ساعة</button>
+                        <button onclick="quickFilter('شرطة')" class="bg-national-900/60 hover:bg-national-800 text-emerald-200 px-3 py-1 rounded-lg border border-national-700/50 transition">مراكز الشرطة</button>
+                    </div>
+                </div>
+
+                <!-- Stats Widget Bar -->
+                <div class="lg:col-span-4 grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="bg-national-950/60 p-4 rounded-2xl border border-national-700/40 text-center">
+                        <i class="fa-solid fa-building-columns text-2xl text-national-400 mb-1"></i>
+                        <span class="block text-2xl font-bold font-cairo text-white" id="statTotalFacilities">0</span>
+                        <span class="text-xs text-emerald-300/70">مرفق وخدمة مسجلة</span>
+                    </div>
+                    <div class="bg-national-950/60 p-4 rounded-2xl border border-national-700/40 text-center">
+                        <i class="fa-solid fa-city text-2xl text-goldAccent mb-1"></i>
+                        <span class="block text-2xl font-bold font-cairo text-white">14+</span>
+                        <span class="text-xs text-emerald-300/70">مدينة ومنطقة</span>
+                    </div>
+                    <div class="bg-national-950/60 p-4 rounded-2xl border border-national-700/40 text-center">
+                        <i class="fa-solid fa-users text-2xl text-emerald-400 mb-1"></i>
+                        <span class="block text-2xl font-bold font-cairo text-white">+50k</span>
+                        <span class="text-xs text-emerald-300/70">مستخدم شهرياً</span>
+                    </div>
+                    <div class="bg-national-950/60 p-4 rounded-2xl border border-national-700/40 text-center">
+                        <i class="fa-solid fa-star text-2xl text-yellow-400 mb-1"></i>
+                        <span class="block text-2xl font-bold font-cairo text-white">4.9</span>
+                        <span class="text-xs text-emerald-300/70">متوسط التقييمات</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories Horizontal Scroll Filter -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold font-cairo text-white flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-national-400"></i>
+                    تصنيفات المرافق والخدمات
+                </h2>
+                <button onclick="resetFilters()" class="text-xs text-national-300 hover:text-white transition underline">
+                    إعادة ضبط
+                </button>
+            </div>
+
+            <div id="categoriesContainer" class="flex items-center gap-3 overflow-x-auto pb-3 pt-1 no-scrollbar">
+                <!-- Dynamically Populated Categories -->
+            </div>
+        </section>
+
+        <!-- Interactive Mockup Map Container -->
+        <section id="mapSection" class="glass-card rounded-3xl p-4 sm:p-6 border border-national-500/20 relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="w-3 h-3 rounded-full bg-national-400 pulse-dot"></span>
+                    <h3 class="text-lg font-bold font-cairo text-white">الخريطة التفاعلية الحية للمرافق القريبة</h3>
+                </div>
+                <button onclick="triggerSimulatedGPS()" class="bg-national-800/80 hover:bg-national-700 text-xs text-national-200 px-3 py-1.5 rounded-lg border border-national-600/40 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-location-crosshairs text-national-400"></i>
+                    <span>تحديد موقعي الحقيقي (GPS)</span>
+                </button>
+            </div>
+
+            <!-- Simulated Map Canvas Container -->
+            <div class="relative w-full h-80 sm:h-96 bg-national-950/80 rounded-2xl overflow-hidden border border-national-800/80 shadow-inner flex items-center justify-center">
+                <!-- Decorative SVG Map Graphic Grid -->
+                <svg class="absolute inset-0 w-full h-full opacity-25 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#22c55e" stroke-width="0.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                    <!-- Simulated Roads & Rivers -->
+                    <path d="M-10 120 Q 200 300 600 100 T 1200 250" fill="none" stroke="#15803d" stroke-width="12" opacity="0.6"/>
+                    <path d="M 200 -10 Q 250 200 450 500" fill="none" stroke="#16a34a" stroke-width="8" opacity="0.5"/>
+                </svg>
+
+                <!-- Map Overlay Control Info -->
+                <div class="absolute top-3 right-3 bg-national-950/90 text-xs px-3 py-1.5 rounded-lg border border-national-700/50 text-emerald-200 z-10 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-national-400"></i>
+                    <span>اضغط على أي دَبّوس لعرض المرفق</span>
+                </div>
+
+                <!-- Simulated User Location Marker -->
+                <div id="userGpsMarker" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 transition-all duration-700">
+                    <div class="relative flex items-center justify-center">
+                        <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-sky-400 opacity-75"></span>
+                        <div class="w-6 h-6 bg-sky-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                            <i class="fa-solid fa-user text-white text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pins Container Dynamically Placed -->
+                <div id="mapPinsContainer" class="absolute inset-0 w-full h-full">
+                    <!-- Map Pins generated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Facilities List Header -->
+        <section class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-national-800/60 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold font-cairo text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-national-400"></i>
+                        قائمة المرافق والخدمات المتاحة
+                    </h3>
+                    <p class="text-xs text-emerald-300/70 mt-1" id="resultsCountText">عرض كافة المرافق المتاحة</p>
+                </div>
+
+                <!-- Type Filters (All / Public / Private) -->
+                <div class="flex items-center gap-1 bg-national-950/70 p-1 rounded-xl border border-national-800 self-start sm:self-auto">
+                    <button onclick="setSectorFilter('ALL')" id="sectorBtnALL" class="sector-tab-btn active px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">الكل</button>
+                    <button onclick="setSectorFilter('عام')" id="sectorBtnPUBLIC" class="sector-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-200 hover:text-white transition">مرافق عامة</button>
+                    <button onclick="setSectorFilter('خاص')" id="sectorBtnPRIVATE" class="sector-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-200 hover:text-white transition">مرافق خاصة</button>
+                </div>
+            </div>
+
+            <!-- Facilities Grid -->
+            <div id="facilitiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Facility Cards Populated Dynamically -->
+            </div>
+
+            <!-- Empty Search Results State -->
+            <div id="emptyState" class="hidden text-center py-16 glass-card rounded-3xl border border-national-700/30 space-y-4">
+                <div class="w-16 h-16 bg-national-900/80 rounded-full flex items-center justify-center mx-auto text-national-400 text-2xl border border-national-700">
+                    <i class="fa-solid fa-magnifying-glass-slash"></i>
+                </div>
+                <h4 class="text-lg font-bold text-white">لم نجد أي نتائج مطابقة لبحثك</h4>
+                <p class="text-sm text-emerald-200/60 max-w-md mx-auto">تأكد من كتابة الكلمات بشكل صحيح أو حاول اختيار تصنيف آخر من الشريط العلوي.</p>
+                <button onclick="resetFilters()" class="bg-national-700 hover:bg-national-600 text-white text-xs px-4 py-2 rounded-xl transition">
+                    إعادة عرض كافة المرافق
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-national-800/80 glass-nav py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-right">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-national-600 flex items-center justify-center text-white font-bold font-cairo">
+                    و
+                </div>
+                <div>
+                    <span class="text-lg font-bold font-cairo text-white block">منصة وطني للخدمات الرقمية</span>
+                    <span class="text-xs text-emerald-300/60">تمكين وتسهيل الوصول للمرافق العامة والخاصة بكل سرعة وأمان</span>
+                </div>
+            </div>
+            <div class="text-xs text-emerald-300/60">
+                جميع الحقوق محفوظة &copy; <span id="yearSpan"></span> - منصة وطني الرقمية
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal: Add New Facility -->
+    <div id="addFacilityModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+        <div class="glass-modal rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5 transform transition-all border border-national-500/30 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-national-700/60 pb-4">
+                <h3 class="text-xl font-bold font-cairo text-white flex items-center gap-2">
+                    <i class="fa-solid fa-square-plus text-national-400"></i>
+                    إضافة مرفق أو خدمة جديدة
+                </h3>
+                <button onclick="closeAddFacilityModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="addFacilityForm" onsubmit="saveNewFacility(event)" class="space-y-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block text-emerald-200 font-medium mb-1.5">اسم المرفق أو الخدمة *</label>
+                    <input type="text" id="facName" required placeholder="مثال: صيدلية الأمل، مركز شرطة الشمال..." 
+                           class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-emerald-200 font-medium mb-1.5">نوع القطاع *</label>
+                        <select id="facSector" required class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                            <option value="عام">مرفق عام (حكومي/خدمي)</option>
+                            <option value="خاص">مرفق خاص (تجاري/مهني)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-emerald-200 font-medium mb-1.5">التصنيف الرئيسي *</label>
+                        <select id="facCategory" required class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                            <option value="مستشفيات وطوارئ">مستشفيات وطوارئ</option>
+                            <option value="صيدليات">صيدليات</option>
+                            <option value="مراكز شرطة وأمن">مراكز شرطة وأمن</option>
+                            <option value="صيانة وخدمات">صيانة وخدمات منازل</option>
+                            <option value="خدمات السيارات">خدمات السيارات</option>
+                            <option value="بلديات وخدمات">بلديات وخدمات حكومية</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-emerald-200 font-medium mb-1.5">رقم الهاتف *</label>
+                        <input type="tel" id="facPhone" required placeholder="0500000000" 
+                               class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                    </div>
+                    <div>
+                        <label class="block text-emerald-200 font-medium mb-1.5">ساعات العمل</label>
+                        <input type="text" id="facHours" placeholder="مثال: 24/7 أو 8 ص - 10 م" 
+                               class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-emerald-200 font-medium mb-1.5">العنوان / الحي *</label>
+                    <input type="text" id="facAddress" required placeholder="اسم الشارع أو الحي أو المدينة" 
+                           class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400">
+                </div>
+
+                <div>
+                    <label class="block text-emerald-200 font-medium mb-1.5">وصف قصير للخدمة</label>
+                    <textarea id="facDesc" rows="3" placeholder="اكتب نبذة مختصرة عن الخدمات المقدمة..." 
+                              class="w-full bg-national-950/80 text-white rounded-xl p-3 border border-national-700 focus:outline-none focus:border-national-400"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-national-700/60">
+                    <button type="button" onclick="closeAddFacilityModal()" class="px-5 py-2.5 rounded-xl bg-national-900 hover:bg-national-800 text-gray-300 font-medium">إلغاء</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-national-500 to-national-600 hover:from-national-400 hover:to-national-500 text-white font-bold shadow-lg">حفظ المرفق</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Facility Details -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+        <div class="glass-modal rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6 border border-national-500/30 relative overflow-hidden">
+            <!-- Close Button -->
+            <button onclick="closeDetailModal()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-lg w-8 h-8 rounded-full bg-national-950/60 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div id="detailContent">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Message -->
+    <div id="toast" class="fixed bottom-6 left-6 z-50 hidden transform transition-all duration-300">
+        <div class="bg-national-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-national-500 flex items-center gap-3">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-national-400 text-lg"></i>
+            <span id="toastMessage" class="text-sm font-medium">تمت العملية بنجاح</span>
+        </div>
+    </div>
+
+    <script>
+        // Set dynamic current year in footer
+        document.getElementById('yearSpan').textContent = new Date().getFullYear();
+
+        // Initial Facilities Data Store
+        let facilities = [
+            {
+                id: 1,
+                name: "مستشفى الملك فهد المركزي",
+                category: "مستشفيات وطوارئ",
+                sector: "عام",
+                rating: 4.8,
+                reviewsCount: 320,
+                phone: "937",
+                hours: "24 ساعة / طوارئ",
+                address: "طريق الملك عبد العزيز - حي الزهور",
+                city: "الرياض",
+                icon: "fa-hospital",
+                description: "مستشفى مرجعي متكامل يقدم خدمات الطوارئ، الرعاية المركزة، والعيادات التخصصية الشاملة.",
+                mapX: 25, // % position on mock map
+                mapY: 35
+            },
+            {
+                id: 2,
+                name: "صيدلية النهضة الحديثة",
+                category: "صيدليات",
+                sector: "خاص",
+                rating: 4.6,
+                reviewsCount: 145,
+                phone: "0112345678",
+                hours: "على مدار 24 ساعة",
+                address: "شارع التخصصي - بجوار المجمع الطبي",
+                city: "جدة",
+                icon: "fa-pills",
+                description: "توفر جميع الأدوية والمستلزمات الطبية مع خدمة التوصيل السريع للمنازل.",
+                mapX: 55,
+                mapY: 45
+            },
+            {
+                id: 3,
+                name: "مركز شرطة السلامة",
+                category: "مراكز شرطة وأمن",
+                sector: "عام",
+                rating: 4.9,
+                reviewsCount: 88,
+                phone: "999",
+                hours: "24/7 طوارئ وأمن",
+                address: "حي السلامة - الشارع العام",
+                city: "جدة",
+                icon: "fa-shield-halved",
+                description: "تقديم الخدمات الأمنية والاستجابة للبلاغات الطارئة وخدمات المجتمع.",
+                mapX: 75,
+                mapY: 25
+            },
+            {
+                id: 4,
+                name: "مركز أوتو فيكس لخدمات السيارات",
+                category: "خدمات السيارات",
+                sector: "خاص",
+                rating: 4.5,
+                reviewsCount: 92,
+                phone: "0551234567",
+                hours: "8:00 ص - 10:00 م",
+                address: "المنطقة الصناعية - المخطط الأول",
+                city: "الدمام",
+                icon: "fa-car-wrench",
+                description: "صيانة شاملة للسيارات، فحص كمبيوتر، غيار زيت، وميكانيكا عامة برعاية مهندسين مختصين.",
+                mapX: 40,
+                mapY: 70
+            },
+            {
+                id: 5,
+                name: "مركز الخدمات البلدية المتكاملة",
+                category: "بلديات وخدمات",
+                sector: "عام",
+                rating: 4.3,
+                reviewsCount: 64,
+                phone: "940",
+                hours: "7:30 ص - 2:30 م",
+                address: "طريق الأمير سلطان - المركز الإداري",
+                city: "الرياض",
+                icon: "fa-building-columns",
+                description: "إصدار الرخص التجارية، تراخيص البناء، وخدمات النظافة والإصحاح البيئي.",
+                mapX: 60,
+                mapY: 80
+            },
+            {
+                id: 6,
+                name: "شركة النجم الفني للصيانة المنزلية",
+                category: "صيانة وخدمات",
+                sector: "خاص",
+                rating: 4.7,
+                reviewsCount: 210,
+                phone: "0509876543",
+                hours: "8:00 ص - 11:00 م",
+                address: "حي الورود - شارع العليا",
+                city: "الرياض",
+                icon: "fa-screws-wrench",
+                description: "خدمات السباكة، الكهرباء، التكييف، والدهانات الذكية بخبراء معتمدين وشبكة ضمان.",
+                mapX: 80,
+                mapY: 60
+            }
+        ];
+
+        // Categories Configuration List
+        const categories = [
+            { id: "ALL", name: "الكل", icon: "fa-border-all" },
+            { id: "مستشفيات وطوارئ", name: "مستشفيات وطوارئ", icon: "fa-hospital" },
+            { id: "صيدليات", name: "صيدليات", icon: "fa-pills" },
+            { id: "مراكز شرطة وأمن", name: "أمن وشرطة", icon: "fa-shield-halved" },
+            { id: "صيانة وخدمات", name: "صيانة منازل", icon: "fa-wrench" },
+            { id: "خدمات السيارات", name: "خدمات السيارات", icon: "fa-car" },
+            { id: "بلديات وخدمات", name: "بلديات وحكومي", icon: "fa-building" }
+        ];
+
+        // Global State Variables
+        let activeCategory = "ALL";
+        let activeSector = "ALL"; // 'ALL', 'عام', 'خاص'
+        let searchQuery = "";
+
+        window.onload = function() {
+            renderCategories();
+            renderFacilities();
+            renderMapPins();
+            updateStats();
+        };
+
+        function renderCategories() {
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = categories.map(cat => {
+                const isActive = activeCategory === cat.id;
+                const activeClasses = isActive 
+                    ? "bg-gradient-to-r from-national-500 to-national-600 text-white shadow-lg border-national-300/40" 
+                    : "bg-national-950/60 hover:bg-national-900 text-emerald-200 border-national-700/50";
+                
+                return `
+                    <button onclick="selectCategory('${cat.id}')" 
+                            class="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeClasses}">
+                        <i class="fa-solid ${cat.icon} text-sm"></i>
+                        <span>${cat.name}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectCategory(catId) {
+            activeCategory = catId;
+            renderCategories();
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function setSectorFilter(sector) {
+            activeSector = sector;
+            
+            // Update Sector Buttons Styles
+            document.querySelectorAll('.sector-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-national-600', 'text-white', 'shadow');
+                btn.classList.add('text-emerald-200');
+            });
+
+            const activeBtn = document.getElementById(`sectorBtn${sector === 'ALL' ? 'ALL' : sector === 'عام' ? 'PUBLIC' : 'PRIVATE'}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-national-600', 'text-white', 'shadow');
+                activeBtn.classList.remove('text-emerald-200');
+            }
+
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            document.getElementById('mobileSearchInput').value = searchQuery;
+            toggleClearBtn();
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function handleMobileSearch() {
+            searchQuery = document.getElementById('mobileSearchInput').value.trim().toLowerCase();
+            document.getElementById('searchInput').value = searchQuery;
+            toggleClearBtn();
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function quickFilter(query) {
+            document.getElementById('searchInput').value = query;
+            handleSearch();
+        }
+
+        function toggleClearBtn() {
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = "";
+            document.getElementById('mobileSearchInput').value = "";
+            searchQuery = "";
+            toggleClearBtn();
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function resetFilters() {
+            activeCategory = "ALL";
+            activeSector = "ALL";
+            searchQuery = "";
+            document.getElementById('searchInput').value = "";
+            document.getElementById('mobileSearchInput').value = "";
+            toggleClearBtn();
+            setSectorFilter('ALL');
+            renderCategories();
+            renderFacilities();
+            renderMapPins();
+        }
+
+        function getFilteredFacilities() {
+            return facilities.filter(item => {
+                // Category Match
+                const matchesCategory = (activeCategory === "ALL") || (item.category === activeCategory);
+                // Sector Match
+                const matchesSector = (activeSector === "ALL") || (item.sector === activeSector);
+                // Search Query Match
+                const matchesSearch = searchQuery === "" || 
+                    item.name.toLowerCase().includes(searchQuery) ||
+                    item.category.toLowerCase().includes(searchQuery) ||
+                    item.address.toLowerCase().includes(searchQuery) ||
+                    item.description.toLowerCase().includes(searchQuery);
+
+                return matchesCategory && matchesSector && matchesSearch;
+            });
+        }
+
+        function renderFacilities() {
+            const grid = document.getElementById('facilitiesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const countText = document.getElementById('resultsCountText');
+            const filtered = getFilteredFacilities();
+
+            countText.textContent = `تم العثور على (${filtered.length}) مرفق وخدمة`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = "";
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(fac => {
+                const isPublic = fac.sector === "عام";
+                const badgeBg = isPublic 
+                    ? "bg-sky-500/20 text-sky-300 border-sky-400/30" 
+                    : "bg-amber-500/20 text-amber-300 border-amber-400/30";
+
+                return `
+                    <div class="glass-card rounded-2xl p-5 border border-national-700/50 hover:border-national-400/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col justify-between group">
+                        <div class="space-y-3">
+                            <!-- Card Top Header -->
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-xl bg-national-900/90 border border-national-700 flex items-center justify-center text-national-400 group-hover:scale-105 transition-transform">
+                                        <i class="fa-solid ${fac.icon} text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeBg} mb-1">
+                                            قطاع ${fac.sector}
+                                        </span>
+                                        <h4 class="text-base font-bold font-cairo text-white group-hover:text-national-300 transition-colors">${fac.name}</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-emerald-100/70 line-clamp-2 leading-relaxed">
+                                ${fac.description}
+                            </p>
+
+                            <!-- Rating & Hours Info -->
+                            <div class="grid grid-cols-2 gap-2 pt-2 text-xs border-t border-national-800/60">
+                                <div class="flex items-center gap-1.5 text-yellow-400">
+                                    <i class="fa-solid fa-star"></i>
+                                    <span class="font-bold text-white">${fac.rating}</span>
+                                    <span class="text-emerald-300/50">(${fac.reviewsCount})</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-emerald-300/80 truncate">
+                                    <i class="fa-regular fa-clock text-national-400"></i>
+                                    <span class="truncate">${fac.hours}</span>
+                                </div>
+                            </div>
+
+                            <!-- Address -->
+                            <div class="flex items-center gap-1.5 text-xs text-emerald-200/70">
+                                <i class="fa-solid fa-location-dot text-national-400"></i>
+                                <span class="truncate">${fac.address}</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Action Buttons -->
+                        <div class="pt-4 mt-4 border-t border-national-800/60 grid grid-cols-2 gap-2">
+                            <button onclick="openDetailModal(${fac.id})" class="w-full bg-national-900/80 hover:bg-national-800 text-emerald-200 text-xs py-2 rounded-xl border border-national-700 transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>التفاصيل</span>
+                            </button>
+                            
+                            <a href="tel:${fac.phone}" onclick="event.stopPropagation();" class="w-full bg-national-600 hover:bg-national-500 text-white text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-md">
+                                <i class="fa-solid fa-phone"></i>
+                                <span>اتصال</span>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMapPins() {
+            const container = document.getElementById('mapPinsContainer');
+            const filtered = getFilteredFacilities();
+
+            container.innerHTML = filtered.map(fac => {
+                return `
+                    <div class="absolute map-pin cursor-pointer" 
+                         style="left: ${fac.mapX}%; top: ${fac.mapY}%; transform: translate(-50%, -100%);"
+                         onclick="openDetailModal(${fac.id})">
+                        <div class="relative group">
+                            <!-- Tooltip on Pin Hover -->
+                            <div class="absolute bottom-full right-1/2 translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap z-30 pointer-events-none">
+                                <div class="bg-national-950 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg border border-national-500 shadow-xl">
+                                    ${fac.name}
+                                </div>
+                                <div class="w-2 h-2 bg-national-950 rotate-45 -mt-1 border-r border-b border-national-500"></div>
+                            </div>
+
+                            <!-- Pin Icon Badge -->
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-national-600 to-national-400 border-2 border-white shadow-xl flex items-center justify-center text-white text-xs">
+                                <i class="fa-solid ${fac.icon}"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function triggerSimulatedGPS() {
+            const userMarker = document.getElementById('userGpsMarker');
+            // Randomize user marker slightly to simulate real GPS location lookup
+            const randomX = Math.floor(Math.random() * 40) + 30; // 30% to 70%
+            const randomY = Math.floor(Math.random() * 40) + 30;
+
+            userMarker.style.left = `${randomX}%`;
+            userMarker.style.top = `${randomY}%`;
+
+            showToast("تم تحديث موقعك الحقيقي بواسطة الـ GPS بنجاح");
+        }
+
+        function toggleMapListView() {
+            const mapSection = document.getElementById('mapSection');
+            const toggleText = document.getElementById('viewToggleText');
+            const toggleIcon = document.getElementById('viewToggleIcon');
+
+            if (mapSection.classList.contains('hidden')) {
+                mapSection.classList.remove('hidden');
+                toggleText.textContent = "إخفاء الخريطة";
+                toggleIcon.className = "fa-solid fa-eye-slash";
+            } else {
+                mapSection.classList.add('hidden');
+                toggleText.textContent = "عرض الخريطة";
+                toggleIcon.className = "fa-solid fa-map";
+            }
+        }
+
+        function openAddFacilityModal() {
+            document.getElementById('addFacilityModal').classList.remove('hidden');
+        }
+
+        function closeAddFacilityModal() {
+            document.getElementById('addFacilityModal').classList.add('hidden');
+            document.getElementById('addFacilityForm').reset();
+        }
+
+        function saveNewFacility(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('facName').value;
+            const sector = document.getElementById('facSector').value;
+            const category = document.getElementById('facCategory').value;
+            const phone = document.getElementById('facPhone').value;
+            const hours = document.getElementById('facHours').value || "غير محدد";
+            const address = document.getElementById('facAddress').value;
+            const description = document.getElementById('facDesc').value || "لا يوجد وصف إضافي للمرفق.";
+
+            // Dynamic Icon Selection
+            let icon = "fa-building";
+            if (category.includes("مستشفى")) icon = "fa-hospital";
+            else if (category.includes("صيدلية")) icon = "fa-pills";
+            else if (category.includes("شرطة")) icon = "fa-shield-halved";
+            else if (category.includes("سيارات")) icon = "fa-car";
+            else if (category.includes("صيانة")) icon = "fa-wrench";
+
+            const newFac = {
+                id: facilities.length + 1,
+                name: name,
+                category: category,
+                sector: sector,
+                rating: 5.0,
+                reviewsCount: 1,
+                phone: phone,
+                hours: hours,
+                address: address,
+                city: "المملكة",
+                icon: icon,
+                description: description,
+                mapX: Math.floor(Math.random() * 70) + 15,
+                mapY: Math.floor(Math.random() * 70) + 15
+            };
+
+            facilities.unshift(newFac);
+            closeAddFacilityModal();
+            renderFacilities();
+            renderMapPins();
+            updateStats();
+
+            showToast("تمت إضافة المرفق الجديد بنجاح إلى منصة وطني!");
+        }
+
+        function openDetailModal(id) {
+            const fac = facilities.find(f => f.id === id);
+            if (!fac) return;
+
+            const modalContent = document.getElementById('detailContent');
+            const isPublic = fac.sector === "عام";
+            const badgeBg = isPublic 
+                ? "bg-sky-500/20 text-sky-300 border-sky-400/30" 
+                : "bg-amber-500/20 text-amber-300 border-amber-400/30";
+
+            modalContent.innerHTML = `
+                <div class="space-y-4 text-right">
+                    <div class="flex items-center gap-3">
+                        <div class="w-14 h-14 rounded-2xl bg-national-900 border border-national-600 flex items-center justify-center text-national-400 text-2xl">
+                            <i class="fa-solid ${fac.icon}"></i>
+                        </div>
+                        <div>
+                            <span class="inline-block px-3 py-0.5 rounded-full text-xs font-bold border ${badgeBg} mb-1">
+                                قطاع ${fac.sector} - ${fac.category}
+                            </span>
+                            <h3 class="text-xl font-bold font-cairo text-white">${fac.name}</h3>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-emerald-100/80 leading-relaxed bg-national-950/50 p-3.5 rounded-xl border border-national-800">
+                        ${fac.description}
+                    </p>
+
+                    <div class="space-y-2.5 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2 text-emerald-200">
+                            <i class="fa-solid fa-location-dot text-national-400 w-5"></i>
+                            <span><strong>العنوان:</strong> ${fac.address}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-emerald-200">
+                            <i class="fa-solid fa-clock text-national-400 w-5"></i>
+                            <span><strong>ساعات العمل:</strong> ${fac.hours}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-emerald-200">
+                            <i class="fa-solid fa-phone text-national-400 w-5"></i>
+                            <span><strong>رقم التواصل:</strong> ${fac.phone}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-yellow-400">
+                            <i class="fa-solid fa-star w-5"></i>
+                            <span><strong>التقييم:</strong> ${fac.rating} من 5 (${fac.reviewsCount} تقييم)</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-national-700/60 flex gap-3">
+                        <a href="tel:${fac.phone}" class="flex-1 bg-national-600 hover:bg-national-500 text-white font-bold py-3 rounded-xl text-center text-sm transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-phone"></i>
+                            <span>اتصال مباشر</span>
+                        </a>
+                        <button onclick="showToast('جاري فتح الاتجاهات على خريطة Google Maps...'); closeDetailModal();" class="flex-1 bg-national-900 hover:bg-national-800 text-emerald-200 font-bold py-3 rounded-xl text-center text-sm transition border border-national-700 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-diamond-turn-right text-national-400"></i>
+                            <span>الاتجاهات</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalFacilities').textContent = facilities.length;
+        }
+    </script>
+</body>
+</html>
